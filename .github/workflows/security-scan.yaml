@@ -1,0 +1,42 @@
+name: Security Scan
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+  pull_request:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Generate npm audit report
+        run: npm audit --json > audit.json || true
+
+      - name: Pretty Security Report
+        run: node scripts/security-report.js
+
+      - name: Fail on High Vulnerabilities
+        run: |
+          npm audit --audit-level=high
